@@ -2,16 +2,21 @@
 using RunGroopWebApp.Data;
 using RunGroopWebApp.Interfaces;
 using RunGroopWebApp.Models;
+using RunGroopWebApp.Repository;
+using RunGroopWebApp.Services;
+using RunGroopWebApp.ViewModels;
 
 namespace RunGroopWebApp.Controllers
 {
     public class RaceController : Controller
     {
         private readonly IRaceRepoistory _raceRepoistory;
+        private readonly IPhotoService _photoService;
 
-        public RaceController(ApplicationDbContext context, IRaceRepoistory raceRepoistory)
+        public RaceController(IRaceRepoistory raceRepoistory, IPhotoService photoService)
         {
             _raceRepoistory = raceRepoistory;
+            _photoService = photoService;
         }
         public async Task<IActionResult> Index()
         {
@@ -28,14 +33,105 @@ namespace RunGroopWebApp.Controllers
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Create(Race race)
+        public async Task<IActionResult> Create(CreateRaceViewModel raceVM)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                return View(race);
+                var result = await _photoService.AddPhotoAsync(raceVM.Image);
+                var Race = new Race
+                {
+                    Title = raceVM.Title,
+                    Description = raceVM.Description,
+                    Image = result.Url.ToString(),
+                    Address = new Address
+                    {
+                        City = raceVM.Address.City,
+                        State = raceVM.Address.State,
+                        Street = raceVM.Address.Street,
+                    }
+                };
+                _raceRepoistory.Add(Race);
+                return RedirectToAction("Index");
             }
-            _raceRepoistory.Add(race);
-            return RedirectToAction("Index");
+            else
+            {
+                ModelState.AddModelError("", "Photo upload failed");
+            }
+            return View(raceVM);
+        }
+        
+        public async Task<IActionResult> Edit(int id)
+        {
+            var race =await _raceRepoistory.GetByIdAsync(id);
+            if (race == null) return View("Error");
+            var raceVM = new EditRaceViewModel
+            {
+                Title = race.Title,
+                Description = race.Description,
+                AddressId = race.AddressId,
+                Address = race.Address,
+                RaceCategory = race.RaceCategory,
+            };
+            return View(raceVM);    
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(int id, EditRaceViewModel raceVM)
+        {
+            if(!ModelState.IsValid)
+            {
+                ModelState.AddModelError("", "Failed to edit Race");
+                return View("Edit");
+            }
+            var userClub = await _raceRepoistory.GetByIdAsyncNoTracking(id);
+            if (userClub != null)
+            {
+                try
+                {
+                    await _photoService.DeletePhotoAsync(userClub.Image);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "Could not delete phone");
+                    return View(raceVM);
+                }
+                var photoResult = await _photoService.AddPhotoAsync(raceVM.Image);
+
+                var race = new Race
+                {
+                    Id = id,
+                    Title = raceVM.Title,
+                    Description = raceVM.Description,
+                    Image = photoResult.Url.ToString(),
+                    AddressId = raceVM.AddressId,
+                    Address = raceVM.Address,
+
+                };
+
+                _raceRepoistory.Update(race);
+
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                return View(raceVM);
+            }
+        }
+
+        public async Task<IActionResult> Delete(int id)
+        {
+            var raceDetails = await _raceRepoistory.GetByIdAsync(id);
+            if(raceDetails == null) return View("Error");  
+            return View(raceDetails);
+        }
+        [HttpPost, ActionName("delete")]
+        public async Task<IActionResult> DeleteClub(int id)
+        {
+            var raceDetails =await _raceRepoistory.GetByIdAsync(id);
+            if (raceDetails == null) return View("Error");
+
+            _raceRepoistory.Delete(raceDetails);
+            return RedirectToAction("Index");   
         }
     }
 }

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunGroopWebApp", "RunGroopWebApp\RunGroopWebApp.csproj", "{9608E0D9-EB03-4206-8176-90564689065F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunGroopWebApp", "RunGroopWebApp\RunGroopWebApp.csproj", "{9608E0D9-EB03-4206-8176-90564689065F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
