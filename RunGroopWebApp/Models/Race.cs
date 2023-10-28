@@ -16,7 +16,7 @@ namespace RunGroopWebApp.Models
         public Address Address { get; set; }
         public RaceCategory RaceCategory { get; set; }
         [ForeignKey("AppUser")]
-        public string? UserId { get; set; }
+        public string? AppUserId { get; set; }
         public AppUser? AppUser { get; set; }
         public int MyProperty { get; set; }
     }
